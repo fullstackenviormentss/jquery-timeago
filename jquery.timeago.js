@@ -41,23 +41,23 @@
       refreshMillis: 60000,
       allowFuture: false,
       localeTitle: false,
-      cutoff: 0,
+      cutoff: 172800000,
       strings: {
         prefixAgo: null,
         prefixFromNow: null,
         suffixAgo: "ago",
         suffixFromNow: "from now",
-        seconds: "less than a minute",
-        minute: "about a minute",
+        seconds: "Mere seconds",
+        minute: "A minute",
         minutes: "%d minutes",
-        hour: "about an hour",
-        hours: "about %d hours",
-        day: "a day",
+        hour: "An hour",
+        hours: "%d hours",
+        day: "A day",
         days: "%d days",
-        month: "about a month",
+        month: "A month",
         months: "%d months",
-        year: "about a year",
-        years: "%d years",
+        year: "A year",
+        years: "Over a year",
         wordSeparator: " ",
         numbers: []
       }
@@ -124,6 +124,7 @@
   // functions are called with context of a single element
   var functions = {
     init: function(){
+      $(this).data("origtime",$(this).html());
       var refresh_el = $.proxy(refresh, this);
       refresh_el();
       var $s = $t.settings;
@@ -159,9 +160,37 @@
 
     if (!isNaN(data.datetime)) {
       if ( $s.cutoff == 0 || distance(data.datetime) < $s.cutoff) {
-        $(this).text(inWords(data.datetime));
+
+        $(this).text(inWords(data.datetime)).hover(
+          function(){
+            var $this = $(this);
+            var d = data.datetime,
+              daysago = (new Date().getDate() - d.getDate()),
+              exacttime = [(d.getHours() > 12 ? d.getHours() - 12 : d.getHours()),d.getMinutes()].join(":") + (d.getHours() >= 12 ? "pm" : "am"),
+              realdate;
+            switch (daysago) {
+               case 0:
+                  realdate = "At " + exacttime;
+                  break;
+               case 1:
+                  realdate = "Yesterday at " + exacttime;
+                  break;
+               default:
+                  realdate = d.toLocaleDateString() + " at " + exacttime;
+            }
+            $this.stop().fadeOut(100,function(){
+              $this.data("orig",$this.text()).text(realdate).stop().fadeIn(100);
+            });
+          }, function() {
+            var $this = $(this);
+            $this.fadeOut(100,function(){
+              $this.text($this.data("orig")).stop().fadeIn(100);
+            });
+          }
+        );
       }
     }
+    $(this).fadeIn('slow');
     return this;
   }
 
